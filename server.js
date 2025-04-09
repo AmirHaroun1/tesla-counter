@@ -99,12 +99,14 @@ redisClient.connect().then(() => {
             console.log('A user disconnected');
         });
     });
+    app.use('/tesla-counter', express.static('public'));
 
     // Start the server
     const PORT = 5492;
     server.listen(PORT, () => {
         console.log(`Server is running on http://localhost:${PORT}`);
     });
+
 }).catch((err) => {
     console.error('Failed to connect to Redis:', err);
     process.exit(1); // Exit with failure

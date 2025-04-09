@@ -6,7 +6,7 @@
     <title>Tesla Counter</title>
     <style>
         body {
-            background-color: #181818;
+            background-color: white;
             color: white;
             font-family: Arial, sans-serif;
             text-align: center;
@@ -18,8 +18,8 @@
             margin: 0;
         }
         .logo {
-            width: 150px;
-            margin-bottom: 20px;
+            width: 250px;
+            margin-bottom: 80px;
         }
         .counter-container {
             display: flex;
@@ -71,7 +71,7 @@
     </style>
 </head>
 <body>
-<img src="https://upload.wikimedia.org/wikipedia/commons/e/e8/Tesla_logo.png" alt="Tesla Logo" class="logo">
+<img src="https://dicema.com/wp-content/uploads/2025/03/dice_logo_Main-resized-2.webp" alt="Tesla Logo" class="logo">
 <div class="counter-container">
     <div class="counter-box" id="counter">0</div>
     <div class="buttons">
@@ -80,7 +80,7 @@
     </div>
 </div>
 
-<script src="socket.io/socket.io.js"></script>
+<script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io();
 
