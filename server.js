@@ -6,6 +6,26 @@ const redis = require('redis');
 // Create an Express app and HTTP server
 const app = express();
 const server = http.createServer(app);
+const { MongoClient } = require('mongodb');
+
+// MongoDB connection URI and database/collection setup
+const mongoUri = 'mongodb://127.0.0.1:27017';
+const dbName = 'realtime-counter';
+const collectionName = 'counters';
+
+let db, countersCollection;
+
+// Connect to MongoDB
+MongoClient.connect(mongoUri, { useUnifiedTopology: true })
+    .then((client) => {
+        console.log('Connected to MongoDB');
+        db = client.db(dbName);
+        countersCollection = db.collection(collectionName);
+    })
+    .catch((err) => {
+        console.error('Failed to connect to MongoDB:', err);
+        process.exit(1);
+    });
 
 // Initialize Socket.IO with proper CORS handling
 const io = new Server(server, {
@@ -84,6 +104,21 @@ const syncCounterToRedis = async (counter) => {
         }, 5000); // Retry after 5 seconds
     }
 };
+// Save the counter value to MongoDB in the background
+const saveCounterToMongoDB = (counter) => {
+    setImmediate(async () => {
+        try {
+            await countersCollection.updateOne(
+                { name: 'mainCounter' }, // Filter by a unique identifier
+                { $set: { value: counter } }, // Update the counter value
+                { upsert: true } // Insert if it doesn't exist
+            );
+            console.log('Counter saved to MongoDB in the background:', counter);
+        } catch (err) {
+            console.error('Error saving counter to MongoDB:', err);
+        }
+    });
+};
 
 // Connect to Redis and start the server
 redisClient.connect().then(() => {
@@ -117,15 +152,15 @@ redisClient.connect().then(() => {
         socket.on('increment', async () => {
             counter++;
             await syncCounterToRedis(counter); // Sync the new counter value to Redis
-
+            saveCounterToMongoDB(counter); // Save the new counter value to MongoDB in the background
             // Increment the total visitors count in Redis
-            try {
-                await redisClient.incr('total_visitors');
-                const totalVisitors = await redisClient.get('total_visitors');
-                io.emit('updateTotalVisitors', totalVisitors); // Broadcast the total visitors count
-            } catch (err) {
-                console.error('Error updating total visitors count:', err);
-            }
+            // try {
+            //     await redisClient.incr('total_visitors');
+            //     const totalVisitors = await redisClient.get('total_visitors');
+            //     io.emit('updateTotalVisitors', totalVisitors); // Broadcast the total visitors count
+            // } catch (err) {
+            //     console.error('Error updating total visitors count:', err);
+            // }
 
             io.emit('updateCounter', counter); // Broadcast the updated counter to all clients
         });

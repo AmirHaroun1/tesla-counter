@@ -78,7 +78,7 @@
 </head>
 <body>
 <img src="https://dicema.com/wp-content/uploads/2025/03/dice_logo_Main-resized-2.webp" alt="Tesla Logo" class="logo">
-<div class="total-visitors" id="totalVisitors">Total Visitors: <span id="total-in-count">0</span></div>
+<!--<div class="total-visitors" id="totalVisitors">Total Visitors: <span id="total-in-count">0</span></div>-->
 
 <div class="counter-container">
     <div class="counter-box" id="counter">0</div>
@@ -92,9 +92,9 @@
 <script>
     const socket = io(); // Connect to the correct path
     // Update the total visitors count when the server sends a new value
-    socket.on('updateTotalVisitors', (totalVisitors) => {
-        document.getElementById('total-in-count').textContent = totalVisitors;
-    });
+    // socket.on('updateTotalVisitors', (totalVisitors) => {
+    //     document.getElementById('total-in-count').textContent = totalVisitors;
+    // });
     // Update the counter when the server sends a new value
     socket.on('updateCounter', (value) => {
         document.getElementById('counter').textContent = value;
