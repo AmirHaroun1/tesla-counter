@@ -106,6 +106,7 @@ redisClient.connect().then(() => {
             console.log('A user disconnected');
         });
     });
+    app.use('/tesla-counter', express.static('public'));
 
     app.use('/tesla-counter', express.static('public'));
 
