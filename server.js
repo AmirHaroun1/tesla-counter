@@ -65,6 +65,26 @@ const gracefulShutdown = async () => {
 process.on('SIGINT', gracefulShutdown); // Ctrl+C
 process.on('SIGTERM', gracefulShutdown); // Termination signal
 
+const syncCounterToRedis = async (counter) => {
+    try {
+        // Attempt to set the counter value in Redis
+        await redisClient.set('counter', counter);
+
+    } catch (err) {
+        console.error('Error syncing counter to Redis:', err);
+
+        // Retry logic with a delay
+        setTimeout(async () => {
+            try {
+                await redisClient.set('counter', counter);
+                console.log('Counter successfully retried and synced to Redis:', counter);
+            } catch (retryErr) {
+                console.error('Retry failed for syncing counter to Redis:', retryErr);
+            }
+        }, 5000); // Retry after 5 seconds
+    }
+};
+
 // Connect to Redis and start the server
 redisClient.connect().then(() => {
     console.log('Connected to Redis');
@@ -81,23 +101,39 @@ redisClient.connect().then(() => {
     });
 
     // Socket.IO connection handler
-    io.on('connection', (socket) => {
+    io.on('connection', async (socket) => {
         console.log('A user connected');
 
         // Send the current counter value to the newly connected client
         socket.emit('updateCounter', counter);
-
+        // Send the total in visitors count to the newly connected client
+        try {
+            const totalVisitors = await redisClient.get('total_visitors') || 0;
+            socket.emit('updateTotalVisitors', totalVisitors);
+        } catch (err) {
+            console.error('Error fetching total visitors count:', err);
+        }
         // Handle increment events
-        socket.on('increment', () => {
+        socket.on('increment', async () => {
             counter++;
-            redisClient.set('counter', counter); // Save the new counter value to Redis
+            await syncCounterToRedis(counter); // Sync the new counter value to Redis
+
+            // Increment the total visitors count in Redis
+            try {
+                await redisClient.incr('total_visitors');
+                const totalVisitors = await redisClient.get('total_visitors');
+                io.emit('updateTotalVisitors', totalVisitors); // Broadcast the total visitors count
+            } catch (err) {
+                console.error('Error updating total visitors count:', err);
+            }
+
             io.emit('updateCounter', counter); // Broadcast the updated counter to all clients
         });
 
         // Handle decrement events
-        socket.on('decrement', () => {
+        socket.on('decrement', async () => {
             counter--;
-            redisClient.set('counter', counter); // Save the new counter value to Redis
+            await syncCounterToRedis(counter); // Sync the new counter value to Redis
             io.emit('updateCounter', counter); // Broadcast the updated counter to all clients
         });
 
