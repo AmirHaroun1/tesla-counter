@@ -7,8 +7,15 @@ const redis = require('redis');
 const app = express();
 const server = http.createServer(app);
 
-// Initialize Socket.IO
-const io = new Server(server);
+// Initialize Socket.IO with proper CORS handling
+const io = new Server(server, {
+    cors: {
+        origin: "*", // Adjust this for specific domains if needed, e.g., ["https://tesla.dicema.com"]
+        methods: ["GET", "POST"],
+        allowedHeaders: ["Content-Type"],
+        credentials: true
+    }
+});
 
 // Create a Redis client and connect to the Redis server
 const redisClient = redis.createClient({
@@ -100,11 +107,14 @@ redisClient.connect().then(() => {
         });
     });
 
+    app.use('/tesla-counter', express.static('public'));
+
     // Start the server
     const PORT = 5492;
     server.listen(PORT, () => {
         console.log(`Server is running on http://localhost:${PORT}`);
     });
+
 }).catch((err) => {
     console.error('Failed to connect to Redis:', err);
     process.exit(1); // Exit with failure
